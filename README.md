@@ -165,7 +165,6 @@ being used as the default application setting.
 ## Source-Code Organization
 
 ```text
-js/
 ├── app.js                  # Analysis workflow and parameter handling
 ├── ttfAnalysis.js          # TTF calculation
 ├── trendRemoval.js         # NPS trend removal

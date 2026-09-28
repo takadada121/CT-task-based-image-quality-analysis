@@ -104,24 +104,32 @@ class DetectabilityAnalysis {
       // Signal power: |W_task(f)|^2 * TTF(f)^2 * E(f)^2
       const signalPower = Math.pow(wTask, 2) * Math.pow(ttfVal, 2) * Math.pow(eyeFilter, 2);
 
-      // Noise integrand: 2 * pi * f * signalPower * NPS(f)
-      const integrandVal = 2.0 * Math.PI * f * signalPower * npsVal;
-      integrand[i] = integrandVal;
+      // Noise term integrand: 2 * pi * f * signalPower * NPS(f)
+      const noiseIntegrandVal = 2.0 * Math.PI * f * signalPower * npsVal;
 
       // Integration Range ①: Nyquist Limit [fLower, fUpper]
       if (f >= fLower && f <= fUpper) {
         signalSumNyq += 2.0 * Math.PI * f * signalPower * binWidth;
-        noiseSumNyq += integrandVal * binWidth;
+        noiseSumNyq += noiseIntegrandVal * binWidth;
       }
 
       // Integration Range ②: Specified Range [specFMin, specFMax]
       if (f >= specFMin && f <= specFMax) {
         signalSumSpec += 2.0 * Math.PI * f * signalPower * binWidth;
-        noiseSumSpec += integrandVal * binWidth;
+        noiseSumSpec += noiseIntegrandVal * binWidth;
       }
 
       const cumDPrimeSq = noiseSumNyq > 0 ? Math.pow(signalSumNyq, 2) / noiseSumNyq : 0.0;
       cumulativeDPrime[i] = Math.sqrt(Math.max(0, cumDPrimeSq));
+    }
+
+    // 5. Frequency-dependent contribution to NPW detectability: g(f) = d(d')/df
+    for (let i = 0; i < numBins; i++) {
+      if (i === 0) {
+        integrand[i] = cumulativeDPrime[0] / binWidth;
+      } else {
+        integrand[i] = (cumulativeDPrime[i] - cumulativeDPrime[i - 1]) / binWidth;
+      }
     }
 
     const dPrimeNyquist = noiseSumNyq > 0 ? (signalSumNyq / Math.sqrt(noiseSumNyq)) : 0.0;
